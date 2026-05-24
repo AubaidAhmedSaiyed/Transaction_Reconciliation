@@ -1,0 +1,3 @@
+transactionId,timestamp,asset,quantity,type,notes
+e1,2023-01-01T10:00:10Z,Bitcoin,0.5,TRANSFER_IN,example
+e2,2023-01-01T10:06:00Z,ETH,1.234,TRANSFER_IN,example

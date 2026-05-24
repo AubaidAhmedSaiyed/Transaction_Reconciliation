@@ -1,0 +1,4 @@
+transactionId,timestamp,asset,quantity,type,notes
+u1,2023-01-01T10:00:00Z,BTC,0.5,TRANSFER_OUT,example
+u2,2023-01-01T10:05:00Z,ETH,1.234,TRANSFER_OUT,example
+u3,invalid-date,BTC,abc,TRANSFER_IN,invalid row
