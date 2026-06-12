@@ -199,10 +199,65 @@ router.get('/', (req, res) => {
         </div>
 
         <script>
+          const showToast = (msg, isError = false) => {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+              toast = document.createElement('div');
+              toast.id = 'toast';
+              Object.assign(toast.style, {
+                position: 'fixed', bottom: '24px', right: '24px', padding: '16px 24px',
+                background: isError ? '#ef4444' : '#10b981', color: 'white', borderRadius: '12px',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', zIndex: 9999, transition: 'all 0.3s ease',
+                opacity: 0, transform: 'translateY(20px)', fontWeight: 500
+              });
+              document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.style.opacity = 1;
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => { toast.style.opacity = 0; toast.style.transform = 'translateY(20px)'; }, 3000);
+          };
+
           const message = (target, data) => {
             const el = document.getElementById(target);
             el.textContent = JSON.stringify(data, null, 2);
             el.style.display = 'block';
+            el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 300, easing: 'ease-out' });
+          };
+
+          const renderUnmatched = (target, data) => {
+            const el = document.getElementById(target);
+            el.innerHTML = '';
+            el.style.display = 'block';
+            el.style.background = 'transparent';
+            el.style.border = 'none';
+            
+            if (!data.body || !data.body.data || data.body.data.length === 0) {
+              el.innerHTML = '<div style="padding: 16px; background: rgba(255,255,255,0.8); border-radius: 12px; color: var(--text-muted); text-align: center;">No unmatched items found.</div>';
+              return;
+            }
+            
+            const html = data.body.data.map(item => {
+              const tx = item.userTransaction || item.exchangeTransaction;
+              const source = item.category.includes('User') ? 'User' : 'Exchange';
+              return \`
+                <div style="background: rgba(255,255,255,0.8); padding: 16px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid \${source === 'User' ? '#f59e0b' : '#8b5cf6'}">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <strong style="color: var(--text-main);">\${item.category}</strong>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Reason: \${item.reason}</span>
+                  </div>
+                  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.9rem;">
+                    <div><span style="color: var(--text-muted); font-size: 0.75rem; display: block;">ID</span>\${tx.transactionId}</div>
+                    <div><span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Asset</span>\${tx.asset}</div>
+                    <div><span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Quantity</span>\${tx.quantity}</div>
+                    <div><span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Type</span>\${tx.type}</div>
+                  </div>
+                </div>
+              \`;
+            }).join('');
+            
+            el.innerHTML = html;
             el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 300, easing: 'ease-out' });
           };
 
@@ -219,9 +274,9 @@ router.get('/', (req, res) => {
                 const formData = new FormData(form);
                 const res = await fetch(endpoint, { method: 'POST', body: formData });
                 const json = await res.json();
-                alert('Upload Complete!\\nImported: ' + json.imported + '\\nIssues: ' + json.issues);
+                showToast(\`Upload Complete! \${json.imported} imported, \${json.issues} issues.\`);
               } catch(err) {
-                alert('Error uploading: ' + err.message);
+                showToast(\`Error: \${err.message}\`, true);
               }
               btn.textContent = ogText;
               btn.style.opacity = '1';
@@ -248,12 +303,12 @@ router.get('/', (req, res) => {
             const json = await res.json();
             message('reconcileResult', { status: res.status, body: json });
             
-            // Auto-fill run IDs
             if (json.runId) {
                document.querySelector('#reportSummaryForm [name="runId"]').value = json.runId;
                document.querySelector('#reportUnmatchedForm [name="runId"]').value = json.runId;
             }
             btn.textContent = 'Run Reconciliation';
+            showToast('Reconciliation complete!');
           });
 
           document.getElementById('reportSummaryForm').addEventListener('submit', async event => {
@@ -269,7 +324,7 @@ router.get('/', (req, res) => {
             const page = event.target.page.value;
             const limit = event.target.limit.value;
             const res = await fetch('/api/report/' + encodeURIComponent(runId) + '/unmatched?page=' + page + '&limit=' + limit);
-            message('reportUnmatchedResult', { status: res.status, body: await res.json() });
+            renderUnmatched('reportUnmatchedResult', { status: res.status, body: await res.json() });
           });
         </script>
       </body>
