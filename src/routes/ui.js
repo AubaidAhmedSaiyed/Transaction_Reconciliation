@@ -80,7 +80,7 @@ router.get('/', (req, res) => {
           document.getElementById('reportSummaryForm').addEventListener('submit', async event => {
             event.preventDefault();
             const runId = event.target.runId.value.trim();
-            const res = await fetch(`/api/report/${encodeURIComponent(runId)}/summary`);
+            const res = await fetch('/api/report/' + encodeURIComponent(runId) + '/summary');
             message('reportSummaryResult', { status: res.status, body: await res.json() });
           });
 
@@ -89,7 +89,7 @@ router.get('/', (req, res) => {
             const runId = event.target.runId.value.trim();
             const page = event.target.page.value;
             const limit = event.target.limit.value;
-            const res = await fetch(`/api/report/${encodeURIComponent(runId)}/unmatched?page=${page}&limit=${limit}`);
+            const res = await fetch('/api/report/' + encodeURIComponent(runId) + '/unmatched?page=' + page + '&limit=' + limit);
             message('reportUnmatchedResult', { status: res.status, body: await res.json() });
           });
         </script>

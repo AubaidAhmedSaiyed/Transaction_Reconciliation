@@ -5,7 +5,7 @@ const normalize = require('../utils/normalize');
 function qtyWithinTolerance(a, b, pct) {
   const diff = Math.abs(a - b);
   const avg = Math.max(Math.abs(a), Math.abs(b), 1e-12);
-  return (diff / avg) <= pct;
+  return (diff / avg) <= (pct / 100);
 }
 
 async function reconcile({ runId, timestampToleranceSeconds, quantityTolerancePct }) {
@@ -27,14 +27,14 @@ async function reconcile({ runId, timestampToleranceSeconds, quantityTolerancePc
     }).lean().exec();
 
     if (!candidates.length) {
-      results.push({ category: 'USER_ONLY', reason: 'no_candidate', userTransaction: u, exchangeTransaction: null, metadata: {} });
+      results.push({ category: 'Unmatched (User only)', reason: 'no_candidate', userTransaction: u, exchangeTransaction: null, metadata: {} });
       continue;
     }
 
     // filter out already matched
     const filtered = candidates.filter(c => !matchedExchangeIds.has(String(c._id)));
     if (!filtered.length) {
-      results.push({ category: 'CONFLICTING', reason: 'duplicate_candidates_matched', userTransaction: u, exchangeTransaction: null, metadata: {} });
+      results.push({ category: 'Conflicting', reason: 'duplicate_candidates_matched', userTransaction: u, exchangeTransaction: null, metadata: {} });
       continue;
     }
 
@@ -53,19 +53,19 @@ async function reconcile({ runId, timestampToleranceSeconds, quantityTolerancePc
     const qtyMatch = qtyWithinTolerance(u.quantity, best.quantity, quantityTolerancePct);
 
     if (!qtyMatch) {
-      results.push({ category: 'CONFLICTING', reason: 'quantity_outside_tolerance', userTransaction: u, exchangeTransaction: best, metadata: { tsDelta, qtyDelta: Math.abs(u.quantity - best.quantity) } });
+      results.push({ category: 'Conflicting', reason: 'quantity_outside_tolerance', userTransaction: u, exchangeTransaction: best, metadata: { tsDelta, qtyDelta: Math.abs(u.quantity - best.quantity) } });
       continue;
     }
 
     // matched
     matchedExchangeIds.add(String(best._id));
-    results.push({ category: 'MATCHED', reason: 'ok', userTransaction: u, exchangeTransaction: best, metadata: { tsDelta } });
+    results.push({ category: 'Matched', reason: 'ok', userTransaction: u, exchangeTransaction: best, metadata: { tsDelta } });
   }
 
   // any exchange transactions not matched are EXCHANGE_ONLY
   const unmatchedExchange = await ExchangeTransaction.find({ _id: { $nin: Array.from(matchedExchangeIds) } }).lean().exec();
   for (const e of unmatchedExchange) {
-    results.push({ category: 'EXCHANGE_ONLY', reason: 'no_user_candidate', userTransaction: null, exchangeTransaction: e, metadata: {} });
+    results.push({ category: 'Unmatched (Exchange only)', reason: 'no_user_candidate', userTransaction: null, exchangeTransaction: e, metadata: {} });
   }
 
   return results;
