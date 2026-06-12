@@ -10,12 +10,13 @@ Quick start
 
 APIs
 
-- POST `/upload/user` — multipart form `file` upload for user CSVs.
-- POST `/upload/exchange` — multipart form `file` upload for exchange CSVs.
-- POST `/reconcile` — trigger reconciliation, optional JSON body: `timestampToleranceSeconds`, `quantityTolerancePct`.
-- GET `/report/:runId` — download full CSV report.
-- GET `/report/:runId/summary` — JSON counts.
-- GET `/report/:runId/unmatched` — paginated unmatched rows.
+- GET `/api` — health endpoint and API root.
+- POST `/api/upload/user` — multipart form `file` upload for user CSVs.
+- POST `/api/upload/exchange` — multipart form `file` upload for exchange CSVs.
+- POST `/api/reconcile` — trigger reconciliation, optional JSON body: `timestampToleranceSeconds`, `quantityTolerancePct`.
+- GET `/api/report/:runId` — download full CSV report.
+- GET `/api/report/:runId/summary` — JSON counts.
+- GET `/api/report/:runId/unmatched` — paginated unmatched rows.
 
 Assumptions & Strategy
 
